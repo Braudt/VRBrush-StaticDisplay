@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7508624552306067100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9192702573377460700}
+  - component: {fileID: 7263848365193014201}
+  m_Layer: 0
+  m_Name: OfflineSettings
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9192702573377460700
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7508624552306067100}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.062008202, y: -0.3971033, z: 0.012501258}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7263848365193014201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7508624552306067100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 668cb215d4492474ea631afc76e54e7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  firstTimeStamp: 0
+  drawingMaterialList:
+  - {fileID: 2100000, guid: a1cae9b7e92669e4aac42d3bc31250fd, type: 2}
+  - {fileID: 2100000, guid: f29b0d58e145b4c4c889366384a55d2a, type: 2}
+  - {fileID: 2100000, guid: aacfdf40f1bcb264a8b67bbe213b5021, type: 2}
+  - {fileID: 2100000, guid: 68f7ac4c1e7c39e439e4b17ca837abad, type: 2}
+  - {fileID: 2100000, guid: 6a8d391f9ea738345954874268e15082, type: 2}
+  - {fileID: 2100000, guid: cd84c86f2d373404d9883ae3b537b569, type: 2}
+  - {fileID: 2100000, guid: cadff2a335c00a642a82121aad07fb17, type: 2}
+  drawingMaterialIndex:
+    m_InternalValue: 0
+  drawingPrefabList: []
