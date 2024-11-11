@@ -5,6 +5,7 @@ using System.IO;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 
@@ -20,6 +21,7 @@ public class CameraPoseManager : MonoBehaviour
 
 
     private bool activeOverlay;
+    private bool lockControls;
 
 
     // Saving Camera Pose
@@ -61,10 +63,11 @@ public class CameraPoseManager : MonoBehaviour
     public int webcamHeight;
 
 
+    // Upload.Download
+    private string uploadUrl = "http://127.0.0.1:5000/upload";
+    private string downloadUrl = "http://127.0.0.1:5000/download/";
 
-
-
-
+    public TextMeshProUGUI statusText;
 
 
 
@@ -73,8 +76,10 @@ public class CameraPoseManager : MonoBehaviour
     {
         cameraSettings = new CameraSettings();
         saveFile = Application.persistentDataPath + "/cameraSettings.data";
-        activeOverlay = true;
+        activeOverlay = false;
         controlCanvas.gameObject.SetActive(activeOverlay);
+        UnityEngine.Cursor.visible = activeOverlay;
+        lockControls = true;
         dropdown = controlCanvas.gameObject.GetComponentInChildren<TMPro.TMP_Dropdown>();
         webcamImage = webcamCanvas.gameObject.GetComponentInChildren<RawImage>();
         Debug.Log("Canvas: "+webcamImage.gameObject.name);
@@ -104,6 +109,7 @@ public class CameraPoseManager : MonoBehaviour
             dropdown.RefreshShownValue();
 
         }
+        LoadPose();
     }
 
 
@@ -197,6 +203,7 @@ public class CameraPoseManager : MonoBehaviour
     public void toggleCanvas() { 
         activeOverlay=!activeOverlay;
         controlCanvas.gameObject.SetActive(activeOverlay);
+        UnityEngine.Cursor.visible = activeOverlay;
 
     }
 
@@ -204,9 +211,13 @@ public class CameraPoseManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyUp(KeyCode.Escape))
+        if (Input.GetKeyUp(KeyCode.BackQuote))
         {
             toggleCanvas();
+        }
+        if (Input.GetKeyUp(KeyCode.Return)) { 
+            lockControls=!lockControls;
+
         }
 
 
@@ -218,90 +229,92 @@ public class CameraPoseManager : MonoBehaviour
 
         if (!activeOverlay)
         {
-
-            if (movementMode == 0)
+            if (!lockControls)
             {
-
-
-                rotationX += Input.GetAxis(axisX) * mouseSensitivity;
-                rotationY += Input.GetAxis(axisY) * mouseSensitivity;
-
-
-                if (rotated)
+                if (movementMode == 0)
                 {
 
 
-                    //rotationX = Mathf.Clamp(rotationX, -90.0f, 90.0f);
-                    camera.transform.localRotation = Quaternion.AngleAxis(rotationY, -Vector3.up);
-                    camera.transform.localRotation *= Quaternion.AngleAxis(rotationX, Vector3.left);
-                    camera.transform.localRotation *= Quaternion.Euler(0, 0, 90);
+                    rotationX += Input.GetAxis(axisX) * mouseSensitivity;
+                    rotationY += Input.GetAxis(axisY) * mouseSensitivity;
 
 
-                    float forwardMovement = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
-                    float strafeMovement = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
-                    camera.transform.position += camera.transform.forward * forwardMovement;
-                    camera.transform.position += camera.transform.right * strafeMovement;
+                    if (rotated)
+                    {
+
+
+                        //rotationX = Mathf.Clamp(rotationX, -90.0f, 90.0f);
+                        camera.transform.localRotation = Quaternion.AngleAxis(rotationY, -Vector3.up);
+                        camera.transform.localRotation *= Quaternion.AngleAxis(rotationX, Vector3.left);
+                        camera.transform.localRotation *= Quaternion.Euler(0, 0, 90);
+
+
+                        float forwardMovement = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
+                        float strafeMovement = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
+                        camera.transform.position += camera.transform.forward * forwardMovement;
+                        camera.transform.position += camera.transform.right * strafeMovement;
+                    }
+                    else
+                    {
+                        rotationY = Mathf.Clamp(rotationY, -90.0f, 90.0f);
+                        camera.transform.localRotation = Quaternion.AngleAxis(rotationX, Vector3.up);
+                        camera.transform.localRotation *= Quaternion.AngleAxis(rotationY, Vector3.left);
+
+
+
+                        float forwardMovement = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
+                        float strafeMovement = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
+                        camera.transform.position += camera.transform.forward * forwardMovement;
+                        camera.transform.position += camera.transform.right * strafeMovement;
+                    }
+
                 }
                 else
                 {
-                    rotationY = Mathf.Clamp(rotationY, -90.0f, 90.0f);
-                    camera.transform.localRotation = Quaternion.AngleAxis(rotationX, Vector3.up);
-                    camera.transform.localRotation *= Quaternion.AngleAxis(rotationY, Vector3.left);
+                    if (rotated)
+                    {
+                        float mouseX = Input.GetAxis(axisX) * mouseSensitivity / 2;
+                        float mouseY = Input.GetAxis(axisY) * mouseSensitivity / 2;
 
+                        float forwardMovement = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
+                        float strafeMovement = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
+                        camera.transform.position += camera.transform.up * mouseY;
+                        camera.transform.position += camera.transform.right * mouseX;
+                        camera.transform.position += camera.transform.forward * forwardMovement;
+                        camera.transform.position += camera.transform.right * strafeMovement;
+                    }
+                    else
+                    {
+                        float mouseX = Input.GetAxis(axisX) * mouseSensitivity / 2;
+                        float mouseY = Input.GetAxis(axisY) * mouseSensitivity / 2;
 
-
-                    float forwardMovement = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
-                    float strafeMovement = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
-                    camera.transform.position += camera.transform.forward * forwardMovement;
-                    camera.transform.position += camera.transform.right * strafeMovement;
+                        float forwardMovement = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
+                        float strafeMovement = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
+                        camera.transform.position += Vector3.up * mouseY;
+                        camera.transform.position += camera.transform.right * mouseX;
+                        camera.transform.position += camera.transform.forward * forwardMovement;
+                        camera.transform.position += camera.transform.right * strafeMovement;
+                    }
                 }
-
-            }
-            else
-            {
-                if (rotated)
+                if (Input.GetKeyUp(KeyCode.P))
                 {
-                    float mouseX = Input.GetAxis(axisX) * mouseSensitivity / 2;
-                    float mouseY = Input.GetAxis(axisY) * mouseSensitivity / 2;
-
-                    float forwardMovement = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
-                    float strafeMovement = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
-                    camera.transform.position += camera.transform.up * mouseY;
-                    camera.transform.position += camera.transform.right * mouseX;
-                    camera.transform.position += camera.transform.forward * forwardMovement;
-                    camera.transform.position += camera.transform.right * strafeMovement;
+                    camera.fieldOfView += 1;
                 }
-                else
+                else if (Input.GetKeyUp(KeyCode.O))
                 {
-                    float mouseX = Input.GetAxis(axisX) * mouseSensitivity / 2;
-                    float mouseY = Input.GetAxis(axisY) * mouseSensitivity / 2;
-
-                    float forwardMovement = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
-                    float strafeMovement = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
-                    camera.transform.position += Vector3.up * mouseY;
-                    camera.transform.position += camera.transform.right * mouseX;
-                    camera.transform.position += camera.transform.forward * forwardMovement;
-                    camera.transform.position += camera.transform.right * strafeMovement;
+                    camera.fieldOfView -= 1;
                 }
-            }
-            if (Input.GetKeyUp(KeyCode.P))
-            {
-                camera.fieldOfView += 1;
-            }
-            else if (Input.GetKeyUp(KeyCode.O))
-            {
-                camera.fieldOfView -= 1;
-            }
 
-            if (Input.GetKeyUp(KeyCode.LeftControl))
-            {
-                movementMode = (movementMode + 1) % 2;
-                Debug.Log("Movement");
-            }
-            if ((Mathf.Abs(Input.mouseScrollDelta.y) > 0.1f))
-            {
-                setScale(new Vector2(Input.mousePosition.x / Screen.width, Input.mousePosition.y / Screen.height), (int)Input.mouseScrollDelta.y);
-                SetOffsetBoundaries();
+                if (Input.GetKeyUp(KeyCode.LeftControl))
+                {
+                    movementMode = (movementMode + 1) % 2;
+                    Debug.Log("Movement");
+                }
+                if ((Mathf.Abs(Input.mouseScrollDelta.y) > 0.1f))
+                {
+                    setScale(new Vector2(Input.mousePosition.x / Screen.width, Input.mousePosition.y / Screen.height), (int)Input.mouseScrollDelta.y);
+                    SetOffsetBoundaries();
+                }
             }
         }
         Graphics.Blit(webcamTexture, rt, scale, offset);
@@ -314,19 +327,75 @@ public class CameraPoseManager : MonoBehaviour
         cameraSettings.FoV = camera.fieldOfView;
         string json = JsonUtility.ToJson(cameraSettings);
         File.WriteAllText(saveFile, json);
+        UploadJson(json);
     }
 
     public void LoadPose()
     {
-        string json = File.ReadAllText(saveFile); ;
-        cameraSettings = JsonUtility.FromJson<CameraSettings>(json);
-        camera.transform.position = cameraSettings.position;
-        camera.transform.rotation = cameraSettings.rotation;
-        camera.fieldOfView = cameraSettings.FoV;
-        rotationX = camera.transform.rotation.eulerAngles.y; 
-        rotationY = camera.transform.rotation.eulerAngles.x > 180 ? -(camera.transform.rotation.eulerAngles.x - 360) : -camera.transform.rotation.eulerAngles.x;
+        //string json = File.ReadAllText(saveFile); ;
+        DownloadJson("default.json");
 
         //rotationY = -camera.transform.rotation.eulerAngles.x;
     }
 
+
+    // Method to upload a file
+    public void UploadJson(string jsonData)
+    {
+        StartCoroutine(UploadJsonCoroutine(jsonData));
+    }
+
+    private IEnumerator UploadJsonCoroutine(string jsonData)
+    {
+        // Create UnityWebRequest for JSON upload
+        UnityWebRequest request = new UnityWebRequest(uploadUrl, "POST");
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+
+        // Send the request and wait for response
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            statusText.text = "JSON data uploaded successfully!";
+        }
+        else
+        {
+            statusText.text = "Upload failed: " + request.error;
+        }
+    }
+
+    // Method to download JSON data
+    public void DownloadJson(string identifier)
+    {
+        StartCoroutine(DownloadJsonCoroutine(identifier));
+    }
+
+    private IEnumerator DownloadJsonCoroutine(string identifier)
+    {
+        // Create UnityWebRequest for JSON download
+        UnityWebRequest request = UnityWebRequest.Get(downloadUrl + identifier);
+
+        // Send the request and wait for response
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            string jsonResponse = request.downloadHandler.text;
+            cameraSettings = JsonUtility.FromJson<CameraSettings>(jsonResponse);
+            camera.transform.position = cameraSettings.position;
+            camera.transform.rotation = cameraSettings.rotation;
+            camera.fieldOfView = cameraSettings.FoV;
+            rotationX = camera.transform.rotation.eulerAngles.y;
+            rotationY = camera.transform.rotation.eulerAngles.x > 180 ? -(camera.transform.rotation.eulerAngles.x - 360) : -camera.transform.rotation.eulerAngles.x;
+            // Process the JSON response (example: display in UI or parse to an object)
+            statusText.text = "Downloaded JSON: " + jsonResponse;
+        }
+        else
+        {
+            statusText.text = "Download failed: " + request.error;
+        }
+    }
 }
