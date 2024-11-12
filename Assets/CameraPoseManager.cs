@@ -33,7 +33,7 @@ public class CameraPoseManager : MonoBehaviour
         public float FoV;
     }
     CameraSettings cameraSettings;
-    private string saveFile;
+    private string saveFile="camerasettings.json";
 
 
     // Camera Motion
@@ -64,8 +64,8 @@ public class CameraPoseManager : MonoBehaviour
 
 
     // Upload.Download
-    private string uploadUrl = "http://127.0.0.1:5000/upload";
-    private string downloadUrl = "http://127.0.0.1:5000/download/";
+    private string uploadUrl = "http://localhost:5000/upload";
+    private string downloadUrl = "http://localhost:5000/download/";
 
     public TextMeshProUGUI statusText;
 
@@ -75,7 +75,7 @@ public class CameraPoseManager : MonoBehaviour
     void Start()
     {
         cameraSettings = new CameraSettings();
-        saveFile = Application.persistentDataPath + "/cameraSettings.data";
+        //saveFile = Application.persistentDataPath + "/cameraSettings.data";
         activeOverlay = false;
         controlCanvas.gameObject.SetActive(activeOverlay);
         UnityEngine.Cursor.visible = activeOverlay;
@@ -326,16 +326,21 @@ public class CameraPoseManager : MonoBehaviour
         cameraSettings.rotation = camera.transform.rotation;
         cameraSettings.FoV = camera.fieldOfView;
         string json = JsonUtility.ToJson(cameraSettings);
-        File.WriteAllText(saveFile, json);
-        UploadJson(json);
+       // UploadJson(json);
+       SaveJson(json);
     }
 
     public void LoadPose()
     {
         //string json = File.ReadAllText(saveFile); ;
-        DownloadJson("default.json");
-
+        //DownloadJson(saveFile);
+        LoadJson();
         //rotationY = -camera.transform.rotation.eulerAngles.x;
+    }
+
+    public void SaveJson(string json) {
+        File.WriteAllText(Path.Combine(Application.persistentDataPath, saveFile), json);
+        Debug.Log("File: " + Path.Combine(Application.persistentDataPath, saveFile));
     }
 
 
@@ -367,6 +372,18 @@ public class CameraPoseManager : MonoBehaviour
         }
     }
 
+    public void LoadJson() {
+        string json = File.ReadAllText(Path.Combine(Application.persistentDataPath, saveFile));
+        Debug.Log("File: " + json);
+        cameraSettings = JsonUtility.FromJson<CameraSettings>(json);
+
+        camera.transform.position = cameraSettings.position;
+        camera.transform.rotation = cameraSettings.rotation;
+        camera.fieldOfView = cameraSettings.FoV;
+        rotationX = camera.transform.rotation.eulerAngles.y;
+        rotationY = camera.transform.rotation.eulerAngles.x > 180 ? -(camera.transform.rotation.eulerAngles.x - 360) : -camera.transform.rotation.eulerAngles.x;
+    }
+
     // Method to download JSON data
     public void DownloadJson(string identifier)
     {
@@ -383,8 +400,11 @@ public class CameraPoseManager : MonoBehaviour
 
         if (request.result == UnityWebRequest.Result.Success)
         {
+
             string jsonResponse = request.downloadHandler.text;
+            statusText.text = "Downloaded JSON: " + jsonResponse;
             cameraSettings = JsonUtility.FromJson<CameraSettings>(jsonResponse);
+            statusText.text = "Setting Cam";
             camera.transform.position = cameraSettings.position;
             camera.transform.rotation = cameraSettings.rotation;
             camera.fieldOfView = cameraSettings.FoV;
